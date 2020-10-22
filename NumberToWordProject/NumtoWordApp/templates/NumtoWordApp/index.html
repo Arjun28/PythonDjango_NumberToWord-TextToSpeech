@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumberToWordConverter</title>    
+</head>
+<body>
+    <h1>Number To Word Converter App</h1>
+    <i>With Text to Speech Conversion. (Turn up volume)</i>
+    <br>
+    Enter value in numbers : <input type = 'text' id = 'input_number'> <p style = "color:red" id = 'error'></p>
+    <br>
+    Convert : <button id = 'button_convert'>Convert</button>
+    <br>
+
+    <h1 id = 'word_result'></h1>
+
+
+<script>
+$('#button_convert').click(function(){ 
+    $('#error').text("");
+    $('#word_result').text("");
+    let number = $('#input_number').val();
+    let invalid_chars = "!`@#$%^&*()+=-[]\\\';,./{}|\":<>?~_"; 
+    let invalid_input_flag = false;
+    for(let i = 0; i< invalid_chars.length; i++){
+        if(number.includes(invalid_chars[i])){
+            console.log("invalid input!!");
+            invalid_input_flag = false;
+            $('#error').text(invalid_chars[i] + " is not allowed in input!!!");
+            break;
+        }
+        else{
+            invalid_input_flag = true;
+        }
+    }
+
+
+
+    if(invalid_input_flag != false){
+        $.ajax({
+            url: '/convert/',
+            method:  "POST",
+            data: {
+                csrfmiddlewaretoken: "{{ csrf_token }}",
+                inputNumber : number,
+            },
+            success: function(resultResponse){
+                console.log(resultResponse);
+                $('#word_result').text(resultResponse.word);
+                let msg = new SpeechSynthesisUtterance();
+                let voices = window.speechSynthesis.getVoices();
+                msg.voice = voices[10];
+                msg.voiceURI = "native";
+                msg.volume = 1;
+                msg.rate = 1;
+                msg.pitch = 0.8;
+                msg.text = resultResponse.word;
+                msg.lang = 'en-US';
+                speechSynthesis.speak(msg);
+            }    
+        });
+    }
+
+    else{
+        alert("Please input valid integer number");
+    }
+});
+
+
+</script>
+
+
+</body>
+</html>
